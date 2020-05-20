@@ -10,6 +10,9 @@ phases:
   build:
     commands:
       - echo "Build stage..."
+      - yarn install
+      - yarn lint
+      - yarn test
   post_build:
     commands:
       - echo "Post build stage..."

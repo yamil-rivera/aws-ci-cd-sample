@@ -6,10 +6,13 @@ env:
 phases:
   install:
     runtime-versions:
-      nodejs: latest
+      nodejs: 10
+      docker: 18
   pre_build:
     commands:
       - echo "Pre build stage..."
+      - echo "Logging in to Amazon ECR..."
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
   build:
     commands:
       - echo "Build stage..."
@@ -17,8 +20,16 @@ phases:
       - yarn install
       - yarn lint
       - yarn test
+      - docker build -t ci-cd-sample:latest .
+      - docker tag ci-cd-sample:latest 718028846669.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/ci-cd-sample:latest
   post_build:
     commands:
       - echo "Post build stage..."
       - echo Build completed on `date`
-
+      - echo Pushing the Docker image...
+      - docker push 718028846669.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/ci-cd-sample:latest
+      - printf '[{"name":"ci-cd-sample","imageUri":"%s"}]' 718028846669.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/ci-cd-sample:latest > imagedefinitions.json
+      - cat imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
